@@ -282,3 +282,263 @@ export default function List(){
   <img src={`/food${i}`} className="food-img"/>
   ~~~
   이렇게 이미지 파일 경로 중간에 변수 집어넣고 싶으면 이런 식으로 집어 넣어도 됨.
+
+&nbsp;&nbsp;
+---
+### client/server component, import 문법
+---
+#### 컴포넌트 만드는법
+1. function 작명(){}
+2. return (축약할 긴 HTML)
+3. <작명/> 사용
+
+~~~
+  function CartItem(){
+    return(
+        <div className="cart-item">
+          <p>상품명</p>
+          <p>$40</p>
+          <p>1개</p>
+        </div>
+    )
+  }
+
+  => <CartItem/>
+~~~
+- 재사용이 잦은 html 덩어리들을 주로 Component로 사용하기
+
+#### component 문법 쓰는 이유
+1. 더러운 코드 한 단어로 축약
+2. 같은 코드 재사용
+
+### Next.js 컴포넌트는 종류가 2개임
+---
+1. server component -> 아무데나 대충 만들면 전부 server
+2. client component -> 파일의 가장 상단에 'use client' 넣고 만들면 client
+~~~
+'use client'
+
+이 밑에 export default ~~~
+~~~
+
+#### server component vs client component
+- 서버 컴포넌트에는 html에 자바스크립트 기능을 넣을 수 없음
+~~~
+export default function Cart() {
+  let 변수 = 이런 변수 설정은 됨.
+    return (
+      <div onclick = {이렇게 자바스크립트를 넣을 수는 없음}>
+      </div
+    )
+}
+~~~
+  이런 게 안된다는 것!
+- useState, useEffect 등도 사용불가
+- 반면, 'use client'라고 위에 쓰면 onClick 뭐 이런 자바스크립트 기능을 사용할 수 있음.
+- 즉, html에 자바스크립트 기능과 useState, useEffect 등을 넣어 사용할 수 있다는 뜻임.
+
+
+##### 그러면 'use client'가 좋은 거 아님?
+-> 맞음. 실제로 개발할때 훨씬 편함, 그런데 server component를 사용하는 이유는  
+[server component]의 장점
+- 로딩 속도가 빠름
+- 검색엔진 노출 유리  
+
+[client component]의 단점
+- 로딩 속도 느림1 (자바스크립트 파일이 좀 많이 필요함)
+- 로딩 속도 느림2 (hydration 필요)  
+(hydration : html 유저에게 보낸 후에 자바스크립트로 html 다시 읽고 분석하는 일)  
+
+#### 그래서 추천하는 점
+큰 페이지들은 server component,  
+큰 페이지 안에서 기능들이 필요한 부분은 client component
+
+### import
+- 일부 코드는 다른 파일로 분할하기도 함.
+- 만약 다음과 같이 파일이 분할이 되어 있다면  
+  <img width="114" alt="image" src="https://github.com/Hanalin0422/NextJS_Toy_Project/assets/78638427/fd34e890-6abb-4a8c-ab45-377f6b941de4">
+
+~~~
+let age = 20;
+export default age;
+~~~
+라고 하고 가져와서 사용하고 싶으면
+~~~
+import 작명 from './data.js'
+~~~
+이렇게 적기.  
+파일 경로를 적을 때는 './' 이렇게 점을 항상 찍는 방향을 추천함.  
+
+여러개의 함수 혹은 변수를 export 하고 싶다면
+~~~
+export { 변수/함수명 }
+
+
+export {age, name};
+~~~
+이렇게 하고 import 할때는 작명하지 말고 그대로 가져다 써야함.
+~~~
+import {age, name} from './data'
+~~~
+<img width="837" alt="image" src="https://github.com/Hanalin0422/NextJS_Toy_Project/assets/78638427/c0d569cb-407f-4856-acbf-30d5e4b72b01">
+
+
+&nbsp;&nbsp;
+---
+### Component에 데이터 전해주려면 props
+---
+- props는 함수 파라미터랑 비슷함
+
+[props 문법]
+1. <자식 Component 작명 = "전할 데이터"/>
+2. 자식은 props.작명 사용
+
+~~~
+
+export default function Cart() {
+  let 장바구니 = ['Tomatoes', 'Pasta'] // 대충 DB에서 가져온 장바구니
+    return (
+      <div>
+        <h4 className="title">Cart</h4>
+        <CartItem 장바구니="장바구니"/>
+        <CartItem/>
+        <CartItem/>
+      </div>
+    )
+  } 
+
+  function CartItem(props){
+    return(
+        <div className="cart-item">
+          <p>상품명 {props.장바구니}</p>
+          <p>$40</p>
+          <p>1개</p>
+        </div>
+    )
+  }
+~~~
+
+그리고 여기서  
+- 중괄호 열면 변수, 함수 등 아무거나 전송 가능함
+~~~
+ <CartItem 장바구니={장바구니}/>
+~~~
+
+- 자식 -> 부모의 패륜관계는 전송 불가, 옆집으로의 불륜도 불가
+- props는 항상 부모에서 자식으로!!
+- 데이터가 많은 컴포넌트에서 필요하면 그들 중 최고 부모 컴포넌트에 보관해야 좋음.
+
+근데 보통
+~~~
+
+export default function Cart() {
+  let 장바구니 = ['Tomatoes', 'Pasta'] // 대충 DB에서 가져온 장바구니
+    return (
+      <div>
+        <h4 className="title">Cart</h4>
+        <CartItem item={장바구니[0]}/>
+        <CartItem item = {장바구니[1]}/>
+      </div>
+    )
+  } 
+
+  function CartItem(props){
+    return(
+        <div className="cart-item">
+          <p>{props.item}</p>
+          <p>$40</p>
+          <p>1개</p>
+        </div>
+    )
+  }
+~~~
+- 이런 구조에서 CartItem()에 데이터를 가져오나 Cart()에서 데이터를 가져오나 상관 없을 수도 있음.  
+=> 보통 데이터들은 fetch()로 DB 데이터를 가져오기 때문에.  
+그래서 같은 데이터 요청이 여러개면 1개로 압축해주는 deduplication 기능이 있음.
+- 그래서 비슷한 컴포넌트가 여러개가 필요하다 하면
+  ~~~
+  <Banner content="롯데카드"/>
+
+
+  function Banner(props){
+    return <h5>{props.content} 결제 행사중</h5>
+  }
+  ~~~
+  이런식으로 사용 가능.  
+  => 비슷한 컴포넌트는 굳이 여러개를 만들 필요가 없다는 말.
+
+혹시나 Next.js에서 태그의 스타일을 변경하는 방법
+~~~
+function Button(props){
+  return <button style={{ background : 'red'}}>버튼</button>
+}
+
+function Button(props){
+  return <button style={{ background : props.color }}>버튼</button>
+}
+~~~
+이렇게 변경하면 됨.
+
+&nbsp;&nbsp;
+---
+### 좋아요 버튼 만들기 (useState, onClick)
+---
+onClick과 같은 것을 쓰고 싶으면 일단 파일의 상단에  
+<strong>'use client'</strong>
+써야
+~~~
+<button onClick={()=>{}}>+</button>
+~~~
+이런식으로 쓸 수 있음.  
+- 이런걸 이벤트 핸들러라고 함.
+- 마우스를 대면 MouseOver
+- 드래그를 하면 Drag이벤트 발생
+
+#### Next.js에는 두가지 데이터를 저장하는 방법이 있음
+- 변수 : 데이터 저장
+- state : 데이터 잠깐 저장 가능, 용도는 변수랑 똑같음
+~~~
+import { useState } from "react"
+
+let [수량, 수량변경] = useState(0)
+~~~
+- 여기서 왼쪽에 들어가는 건 변수명, 오른쪽에 들어가는 건 state변경 도와주는 함수임.
+- useState 또한 use client 컴포넌트 안에서만 사용 가능
+- useState를 사용하는 이유 :
+  - state의 장점 : state가 변경되면 state 쓰는 html 부분도 자동 재렌더링
+  - 근데 일반 변수로 하면 자동으로 html에 업데이트가 안됨.
+
+- state 변경은 state변경함수() 써야함!!!!
+~~~
+<button onClick={()=>{ 수량변경(수량++) }}>+</button>
+~~~
+- 자주 안바뀌는 것들은 그냥 하드코딩 하셈.
+- 자주 변경되는 사항들만 state를 가져다 쓰는 거임.
+
+&nbsp;&nbsp;
+---
+### 좋아요 버튼 만들기 2 (array, object state 변경하려면)
+---
+- 변수든 useState는 값을 그냥 변경할 수 없음.
+~~~
+  let [수량, 수량변경] = useState([0, 0, 0])
+~~~
+useState의 배열이 이렇게 되어있는 경우,
+~~~
+<button onClick={()=>{
+    let copy = [...수량];
+    copy[0]++;
+    수량변경(copy);
+}}></button>
+~~~
+이렇게 해줘야함.  
+- 왜 복사를 해야 하냐면 next에서 state 변경함수를 가져다 쓸때 항상 실행을 시키지 않고 기존 state와 다를 때만 변경을 해줌.
+- 거기에다가 복사 또한 
+  ~~~
+  [...데이터] 
+  ~~~
+  이런식으로 비교를 해줘야함.
+  - 이유는 알다시피 자바스크립트는 그냥 복사하면 그 데이터를 가리키는 주소값을 복사해주기 때문.
+
+[정리]  
+array/object인 state의 경우 ...로 복사해서 수정하고 state 변경함수를 쓰기
