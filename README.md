@@ -9,6 +9,10 @@
 ~~~
 npx create-next-app@latest
 ~~~
+만약 git pull 했는데 next가 안깔려서 실행이 안된다면
+~~~
+npm install next react react-dom
+~~~
 
 실행은 
 ~~~
