@@ -155,3 +155,192 @@ Error: 00102DDF01000000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert 
 => 기능 정의를 먼저 해두면 내가 뭘 모르는지 정확히 알 수 있음.  
 
 #### 그러면 이제부터 글 목록을 보여준 HTML 페이지를 만들어 보자!  
+1. DB 조회하기
+2. DB의 table에서 원하는 정보를 배열로 가져오기
+3. HTML에 가져온 정보를 나타내기  
+-> 이 순서대로 하면 됨.
+
+&nbsp;&nbsp;
+
+## 상세페이지 만들기 1 (Dynamic route)
+혹시 함수 쓸때,
+~~~
+result.map((a, i)=>{
+    return(
+        <div className="list-item">
+            <h4>{a.title}</h4>
+            <p>{a.content}</p>
+        </div>
+    )
+~~~
+다음과 같은 코드에서 return이 한개면 return() + 중괄호 동시에 생략 가능함!!!
+~~~
+{
+  result.map((a, i)=>
+      <div className="list-item">
+          <h4>{a.title}</h4>
+          <p>{a.content}</p>
+      </div>    
+  )
+}
+~~~
+이런 식으로.  
+
+### 아무튼 상세페이지 만들기
+1. 글제목 누르면 상세페이지 이동
+2. 상세페이지 방문시 DB에서 글 1개 꺼내서 HTML에 보여주기  
+상세페이지 URL은 어떻게 만드는 게 좋을까?  
+=> /list/(글번호) 이런 식으로 하면 되지 않을까?  
+
+그럴 때 쓸 수 있는게  
+<strong> Dynamic route </strong>  
+이걸 쓰면 비슷한 페이지 여러개를 만들 필요 없음.  
+
+-> 폴더를 만들 때, detail/[어쩌구]폴더를 만들고 이 안에 page.js를 만들면 저 detail/[이 안에 아무거나] 들어가면 그 안에 있는 page.js 파일을 보여주세요 라고 하는 것과 같음.
+
+- DB에서 게시물 1개만 가져오려면
+~~~
+.findOne({찾을 document 정보})
+
+let result = await db.collection('post').findOne({title : '안녕'});
+
+let result = await db.collection('post').findOne({_id : new ObjectId("6608172dead55cdab4f31284")});
+    
+~~~
+- 그런데 조금더 정확하게 내가 원하는 정보를 가지고 오고 싶다면 props를 통해서 유저가 [어쩌구] 자리에 입력한 값을 가지고 올 수 있음.  
+~~~
+result[i]._id
+~~~
+했는데 ObjectId(어쩌구)라고 나오는 경우 뒤에
+~~~
+result[i]._id.toString()
+~~~
+이라고 붙여줘야 잘 동작함.  
+
+그리고 문자 뒤에 변수를 넣고 싶다면  
+~~~
+<Link href={"/detail/" + a._id}>
+~~~
+이런식으로 '+'를 사용해 줘야 함.  
+
+&nbsp;&nbsp;
+
+###  페이지 이동 방법에는 여러가지가 있음
+- client component에서 페이지 이동시키는 방법  
+~~~
+useRouter()
+~~~
+이건 client component에서만 사용 가능.
+~~~
+'use client'
+
+import { useRouter } from "next/navigation"
+
+export default function DetailLink(){
+    let router = useRouter();
+    return(
+        <button onClick={()=>{router.push('이동할 경로')}}>버튼</button>
+    )
+}
+~~~
+- Link 태그를 사용하지 않고 이렇게 사용하는 이유
+~~~
+router.back() => 뒤로 가기
+router.forward() => 앞으로 가기
+router.refresh() => 변동이 있는 HTML 부분만 새로고침
+router.prefetch('') => 코드가 실행이 되면 안의 페이지에 필요한 모든 파일들이 미리 로드되어 조금 더 빨리 페이지를 넘어갈 수 있음.
+~~~
+그래서 이런 식으로 만약 server component 안에 router기능을 넣고 싶다면 따로 component를 만들어서 불러다가 쓰는 방법이 있음.  
+
+- 근데 여기서 prefetch()는 Link 태그만 써도 자동으로 동작함.  
+- Link 태그에도 prefetch 기능이 내장되어 있음.  
+- 그래서 만약 prefetch() 기능을 끄고 싶다면
+~~~
+<Link prefetch={false} href={~~~}></Link>
+~~~
+이렇게 쓰면 됨.  근데 개발중일땐 prefetch 여부 확인 불가함.  
+나중에 사이트를 발행했을 때 확인 가능함.  
+
+또한,
+~~~
+usePathname() : 현재 URL을 출력할 수 있음
+useSearchParams() : 쿼리스트링 출력
+useParams() : 유저가 [dynamic route] 입력한 거 출력
+~~~
+
+그래서  
+1. 여러페이지 만들려면 [Dynamic Route]
+2. 현재 URL이 뭔지 궁금하면 props/useRouter
+3. 페이지 이동, prefetch 등은 useRouter  
+
+&nbsp;&nbsp;
+## 글 작성기능 만들기 (서버기능 개발은)
+1. 글 작성 페이지 필요
+2. 버튼 누르면 서버에 글 저장해달라고 부탁
+3. 서버는 부탁받으면 검사해보고 DB에 저장
+<img width="1043" alt="image" src="https://github.com/Hanalin0422/NextJS_Toy_Project/assets/78638427/d26b428f-c278-4d73-977d-9b218a54a50b">  
+저 중간에 있는게 server임.  
+
+서버 : 이거 해달라고 요청하면 진짜 해주는 프로그램.  
+서버 개발자가 짜는 코드  
+-> method 종류 : GET, POST, PUT, DELETE, PATCH  
+- GET : 유저에게 데이터 전송시
+- POST : 새로운 데이터 추가시
+- PUT : 데이터 수정시 (전체를 다 변경해줌)
+- DELETE : 데이터 삭제시
+- PATCH : 데이터 수정시 (바뀐 부분만 변경해줌)  
+
+### 서버 기능을 만드는 두가지 방법이 있음.
+1. app 폴더 안에 api 폴더를 만들어서 거기에 서버 기능 만들기
+2. pages라는 폴더를 root 경로에 하나 만들어서 api 폴더를 만들어서 그 안에 서버 기능을 만들기  
+
+그런데 1번이 조금 더 신버전이긴 하나 나사가 빠져 있으므로 2번의 방법을 선택하는 것이 좋음.  
+
+- 누군가가 /api/test로 요청을 보내면 그 파일 안의 코드를 실행해주는게 Next.js의 동작 원리임.
+- 서버는 기능을 실행한 후에 유저에게 응답을 해줘야함.
+~~~
+// test.js에 있는 내용
+// get 요청임.
+
+export default function handler(요청, 응답){
+    console.log(123);
+    return 응답.status(200).json('처리완료');
+}
+~~~
+- post 요청 보내는 법
+~~~
+export default function Write(){
+    return(
+        <div>
+            <h4>글작성</h4>
+            <form action="/api/test" method="POST">
+                <button type="submit">버튼</button>
+            </form>
+        </div>
+    )
+}
+~~~
+post 요청에 따른 처리를 하고 싶다면
+~~~
+export default function handler(요청, 응답){
+
+    if(요청.method == 'POST'){
+        return 응답.status(200).json('처리완료');
+    }
+}
+~~~
+이렇게 처리하면 됨. 그러면 GET말고 POST 요청 올때만 실행해줌.  
+
+내가 만약에 /api/list로 GET요청을 보낸다면
+~~~
+import { connectDB } from "@/util/database";
+
+export default async function showList(req, res){
+    let db = (await connectDB).db("forum");
+    let result = await db.collection('post').find().toArray();
+
+    return res.status(200).json(result);
+}
+~~~
+이렇게 응답을 상태 코드와 함께 json 형태에 담아서 전송할 수 있음.  
+
