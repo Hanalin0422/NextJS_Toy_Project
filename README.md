@@ -344,3 +344,46 @@ export default async function showList(req, res){
 ~~~
 이렇게 응답을 상태 코드와 함께 json 형태에 담아서 전송할 수 있음.  
 
+어쨌든 전송버튼을 눌러서 서버에 글을 보내면  
+서버는 DB에 글을 저장하는 방식으로 글 작성 기능이 동작함.  
+~~~
+export default function Write(){
+    return(
+        <div className="p-20">
+            <h4>글작성</h4>
+            <form action="/api/post/new" method="POST">
+                <input name="title" placeholder="글 제목"/>
+                <input name="content" placeholder="글내용"/>
+                <button type="submit">버튼</button>
+            </form>
+        </div>
+    )
+}
+~~~
+이러면 서버는 post 요청에 대한 처리로  
+(req.body는 유저가 입력한 내용이 담김)
+~~~
+import { connectDB } from "@/util/database";
+
+export default async function handler(req, res){
+    if(req.method == "POST"){
+        if(req.body.title == ''){
+            return res.status(500).json('너 왜 제목 안씀');
+        }
+        // db가 죽어서 저장이 안되는 경우가 있는데 그때 에러 예외 처리는
+        try{
+            const db = (await connectDB).db("forum");
+            let result = await db.collection('post').insertOne(req.body);
+            // redirect를 통해 원하는 곳으로 돌아가게 할 수 있음.
+            return res.status(200).redirect('/list');
+        }catch(error){
+            // DB 저장 실패시 여기가 실행됨
+            return res.status(500).json(error);
+        }
+    }
+}
+~~~
+결론:  
+1. 유저 -> 서버 -> DB 이런 식으로 개발하자  
+2. 서버기능은 /api 폴더에 만들면 됨  
+3. document 하나 발행은 insertOne()  
