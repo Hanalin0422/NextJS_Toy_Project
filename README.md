@@ -386,4 +386,125 @@ export default async function handler(req, res){
 결론:  
 1. 유저 -> 서버 -> DB 이런 식으로 개발하자  
 2. 서버기능은 /api 폴더에 만들면 됨  
-3. document 하나 발행은 insertOne()  
+3. document 하나 발행은 insertOne() 
+
+
+## 글 수정 기능 만들기
+1. 글마다 수정버튼, 누르면 수정 페이지 이동
+2. 수정페이지 만들기 (글가져와서 채워놔야함)
+3. 발행 누르면 DB에 있던 글 수정  
+
+- 현재 URL에 입력한 id를 받아오는 법
+~~~
+export default async function Edit(props){
+}
+---> prps.params.id
+~~~
+- 이렇게 해주면 찾아올 수 있음.
+
+#### input에 값을 미리 입력하려면
+~~~
+defaultValue={}
+or
+value={}
+~~~
+이렇게 사용하면 됨.  
+
+#### DB의 내용을 변경하고 싶다면
+~~~
+let editBoard = await db.collection('post').updateOne({수정할 정보의 게시물(즉 어떤걸 수정하고 싶은지 id 같은 것)}, {$set:{title : '바보', content : '멍청이'}})
+~~~
+- 수정할 내용은 console.log(req.body)에 다 담겨져 있음.  
+- 서버에서 없는 정보는  
+    - 유저에게 보내라고 하거나  
+    - DB에서 꺼내보거나  
+    하면 됨.  
+
+- 서버의 데이터는 문자와 숫자만 주고 받을 수 있음!!
+그래서
+~~~
+<input style={{display : 'none'}} name="_id" defualtValue={result._id_toString()} />
+
+이런 식으로 일단 숨겨서 id값을 보내게 하고  
+서버에서는 
+
+let 바꿀거 = {title : 요청.body.title, content : 요청.body.content}
+
+let result = await db.collection('post').updateOne({_id : new ObjectId(요청.body._id)}, {$set : 바꿀거})
+
+이렇게 해볼 수 있겠음.
+~~~
+그런데 덮어쓰기 말고 기존 값에서 증감만 해줄 수 있는 방법도 있음.  
+이때는 set이 아니라  
+~~~
+$inc : 1
+~~~
+이렇게 쓰면 원래 값에서 1만 증가시킬 수 있음.  
+
+## 글 삭제 기능 만들기
+- 검색했을 때 상단에 뜨고 싶다면 큰 페이지들은 서버 컴포넌트, js기능 넣을 부분만 클라이언트 컴포넌트로 만들어서 진행시키는 것이 좋음.  
+
+- client component에서 DB 데이터를 가져오려면
+~~~
+useEffect(()=>{
+    서버에 부탁해서 DB 게시물을 가져오는 코드를 짜야함.
+    그런다음 그걸 result = DB 게시물
+})
+~~~
+이렇게 가져오면 되는데  
+- 이렇게 하면 단점이 검색 노출이 어려울 수도 있음.  
+    - 왜냐하면 HTML을 먼저 보여주고 그 다음 useEffect()가 실행되기 때문.  
+    - 구글 검색 엔진 봇들이 데이터를 수집해서 검색 결과를 보여주는 건데 페이지에 내용을 방문했을 때 내용이 비어있으면 실망하고 다름 페이지로 넘어갈 때가 있는거임.
+    - 검색 엔진에 친화적이지 않다는 것.  
+- 그러면 검색 엔진에 친화적이고 싶다면? => props로 전송하여 데이터를 보내는 형식으로 짜는게 좋음.  
+
+또한 props 문법 편하게 쓰려면
+~~~
+export default function ListItem({result}){
+    ...
+    result.map((a, i)=> ...)
+}
+~~~
+이런 식으로 props를 안쓰고 부모에게 받은 데이터를 그대로 가져다 쓸 수 있게 할 수도 있음. (destructing 문법)  
+
+#### form 태그 말고도 서버에게 get이나 post 요청을 할 수 있는 또 다른 한가지 방법이 있음 => Ajax
+- client component 안에서만 사용할 수 있는 기능임.
+- fetch('/여기에 URL을 적음') 이렇게 작성하면 get 요청을 보내줌.  
+- Ajax의 장점은 form 태그로 요청시 항상 새로고침이 되는데 ajax는 브라우저의 새로고침없이 get/post 요청을 보내줌.  
+- 요청 완료시 코드 실행은 .then()
+~~~
+<span onClick={()=>{
+    fetch('/api/test').then(()=>{
+        console.log('get요청이 완료되면 이 코드가 실행이 된답니다.')
+    })
+}}> </span>
+~~~
+- post 요청을 하고 싶으면
+~~~
+<span onClick={()=>{
+    fetch('/api/test',{
+        method : 'POST',
+        body : '서버로 보낼 데이터, 문자와 숫자만 가능.'
+        // Object나 Array를 보내고 싶다면 JSON.stringify([1,2,3]) 이런 식으로 보내면 됨.
+    })
+    .then(()=>{
+        console.log('get요청이 완료되면 이 코드가 실행이 된답니다.')
+    })
+}}> </span>
+~~~
+
+#### 다시 정리!! 서버로 Array, Object 전송하고 싶으면
+- 서버와 데이터 주고 받을 땐 원래 문자나 숫자밖에 주고 받을 수 없음.  
+- Array, object 그런 이상한 건 안됨.
+- 하지만 array, object에 따옴표를 쳐두면 문자취급을 해주기 때문에 그렇게 전송할 수 는 있음.
+- 큰 따옴표를 쳐둔 Array, object 자료들을 JSON이라고 부름.  
+- {name : 'kim'} -> {"name" : "kim"}이러면 JSON 되는 거고 이걸 서버로 전송할 수는 있음.
+~~~
+JSON.stringify({name : 'kim'})
+~~~
+근데 귀찮게 직접 따옴표 칠 필요는 없고 JSON.stringify() 안에 담으면 JSON 변환해서 그 자리에 남겨줌.  
+그래서 이렇게 해두면 서버로 array, object 전송 가능함.  
+~~~
+JSON.parse({'{"name" : "kim"}'})
+~~~
+참고로 JSON에 붙은 따옴표를 제거해서 array, object로 만들고 싶으면 JSON.parse() 안에 넣으면 됨.
