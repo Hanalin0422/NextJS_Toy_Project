@@ -505,6 +505,132 @@ JSON.stringify({name : 'kim'})
 근데 귀찮게 직접 따옴표 칠 필요는 없고 JSON.stringify() 안에 담으면 JSON 변환해서 그 자리에 남겨줌.  
 그래서 이렇게 해두면 서버로 array, object 전송 가능함.  
 ~~~
+// JSON 자료를 다시 Object로 변환해주는 함수
 JSON.parse({'{"name" : "kim"}'})
 ~~~
 참고로 JSON에 붙은 따옴표를 제거해서 array, object로 만들고 싶으면 JSON.parse() 안에 넣으면 됨.
+
+
+## 글 삭제 기능 만들기 2 (Ajax 추가 내용과 에러 처리)
+- db에서 삭제를 하고 그걸 let result 에 담게 되면 result에는 document 삭제 결과를 알려줌.  
+- 그래서 console.log(result)라고 치면 삭제된 횟수와 실제 삭제가 되었는지에 대한 여부가 뜸.  
+- 삭제된게 0이면 500, 삭제된게 1이면 200을 보내주세요 와 같은 에러 처리를 할 수도 있겠음.  
+
+Ajax 요청 완료시 코드 실행은
+~~~
+fetch('/URL', {method : 'POST', body : 전송할 데이터})
+.then((r)=>{
+    return r.json()
+})
+.then((r)=>{
+    console.log(r)
+    // 이렇게 하면 서버에서 보낸 메세지를 확인할 수 있음
+})
+~~~
+
+Ajax 에러 처리는  
+~~~
+fetch('/URL')
+.then((r)=>{
+    if(r.status == 200) {
+        // 서버에서 동작 성공시 주는 메세지를 출력해주는 부분
+        return r.json()
+    } else {
+        //서버가 에러코드전송시 실행할코드
+    }
+})
+.then((result)=>{ 
+    //성공시 실행할코드
+}).catch((error)=>{
+    //인터넷문제 등으로 실패시 실행할코드
+    console.log(error)
+})
+~~~
+이런건 복붙해서 쓰면 됨!!! ⭐️⭐️⭐️⭐️⭐️⭐️  
+- 에러가 났을 때는 보통 2가지 경우가 있음.  
+    - 서버가 status(500) 같은 거 보낼때
+    - 인터넷이 끊겨서 네트워크 에러가 났을 때  
+보통 이 2가지가 대표적인 에러임.  
+그런데 나는 서버가 에러 코드 같은 것을 전송했을때 (200 or 500) 서버가 에러코드 전송시 실행할 코드에 코드를 적어주면 됨.  
+- 이렇게 fetch라는 문법은 길고 복잡하기 때문에 보통 axios라는 라이브러리를 사용하여 코드를 짧게 줄임.
+- axios 같은 라이브러리 쓰면 코드 짧아짐.  
+
+#### Ajax (Asynchronous JavaScript And XML)
+Ajax는 서버에서 데이터를 가져와 전체 페이지를 새로 고치지 않고도 DOM을 업데이트 하는 모든 클라이언트 측 과정을 의미함.  
+- XMLHttpRequest (XHR) : AJAX 요청을 생성하는 JavaScript API. XHR의 메서드를 활용하면서 브라우저와 서버의 네트워크 요청을 전송할 수 있음. XHR은 브라우저에서 제공하는 Web API이기 때문에 브라우저 환경에서만 정상적으로 동작함. (node 환경에서는 제공 X)
+- 여기서 Axios는 XHR을 활용한 라이브러리임.  
+~~~
+const url = "https://jsonplaceholder.typicode.com/todos";
+
+axios
+  .get(url)
+  .then((response) => console.log(response.data))
+  .catch((err) => {
+    console.log(err.message);
+  });
+~~~
+위와 같은 형태로 axios 요청을 쓸 수 있음.
+- fetch와 axios는 각각의 장단점이 있으므로 개발자가 편하고 손에 익는걸 사용하면 됨.  
+
+
+## 글 삭제 기능 만들기 3 (query string / URL parameter)
+애니메이션 주는 법 알아볼 거임.  
+애니메이션을 주려면  
+1. 애니메이션 동작 전/ 동작 후 스타일을 먼저 결정 ex ) 투명도 1 -> 0  
+2. 애니메이션 동작 전 스타일 넣기  
+3. 원하는 시점에 애니메이션 동작 후 스타일을 넣으면 됨.
+~~~
+fetch('/api/post/delete',{
+    method:'DELETE',
+    body : props.result[i]._id.toString()
+})
+.then(()=>{
+    e.target.parentElement.style.opacity = 0;
+    setTimeout(()=>{
+        e.target.parentElement.style.display = 'none'
+    }, 1000)
+})
+~~~
+
+### 서버에 데이터를 보내는 다른 방법
+- 서버에 데이터를 보내는 방법 2가지가 나왔음.  
+    - form 태그를 이용하여 데이터를 input에 넣어 보내는 방법  
+    - fetch 안에서 body : result[i]._id 이런 방식으로 데이터를 넣어 보내는 방법  
+이렇게 2가지.  
+하지만 한가지 더있다면 그건 쿼리문을 사용하여 URL에 정보를 담아 보내는 방법임.  
+~~~
+fetch('/api/test?데이터이름=값&데이터이름=값')
+fetch('/api/test?name=kim&age=20')
+
+export default function handler(요청, 응답){
+    console.log(요청.query)
+    return 응답.status(200).json('처리완료');
+}
+~~~
+- 이걸 멋진 말로 query string 이라고 부름.  
+<strong>URL 뒤에 ?데이터이름=값 입력 가능</strong>
+
+- query string의 장점 : 간단함, GET요청도 데이터 전송 가능함.  
+- 단점 : 길고 복잡한 데이터를 집어넣으면 좀 많이 더러움, URL에 중요한 데이터 넣으면 안됨.  
+
+또한, api 만들때도 pages/api/abc/[어쩌구].js 이렇게 파일 하나를 만들고  
+누가 /api/abc/아무문자로 요청을 하면 어쩌구 파일 안에 있는 코드가 실행됨.  
+이걸 <strong>URL 파라미터 문법</strong>이라고 함.  
+- URL 파라미터 문법을 써서 서버로 데이터 전송을 가능하게 할 수 있다는 말임.  
+~~~
+fetch('/api/abc/kim')
+
+이렇게 하면 kim이 전송됨.
+export default function handler(요청, 응답){
+    console.log(요청.query)
+    return 응답.status(200).json()
+}
+=> { '어쩌구': 'kim' } 라고 콘솔에 찍힘.
+~~~
+
+요약 정리  
+1. DB document삭제는 deleteOne  
+2. 서버랑 ajax로 통신 가능
+3. 서버로 데이터전송시 귀찮으면 query string / URL parameter  
+
+

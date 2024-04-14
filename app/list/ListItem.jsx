@@ -18,16 +18,29 @@ export default function ListItem(props){
                         <Link href={'/edit/' + props.result[i]._id}>✏️수정</Link>
                         &nbsp;&nbsp;&nbsp;
                         
-                        <span className="delete" onClick={()=>{
+                        {/* <span className="delete" onClick={(e)=>{
                             fetch('/api/post/delete',{
                                 method:'DELETE',
                                 body : props.result[i]._id.toString()
                             })
                             .then(()=>{
-                                alert('삭제되었습니다.');
-                                window.location.reload();
+                                e.target.parentElement.style.opacity = 0;
+                                setTimeout(()=>{
+                                    e.target.parentElement.style.display = 'none'
+                                }, 1000)
+                            })
+                        }}>🗑️삭제</span> */}
+
+                        <span className="delete" onClick={(e)=>{
+                            fetch(`/api/post/delete?_id=${props.result[i]._id}`)
+                            .then(()=>{
+                                e.target.parentElement.style.opacity = 0;
+                                setTimeout(()=>{
+                                    e.target.parentElement.style.display = 'none'
+                                }, 1000)
                             })
                         }}>🗑️삭제</span>
+
                         &nbsp;&nbsp;&nbsp;
                         <DetailLink></DetailLink>
                     </div>    
@@ -36,3 +49,4 @@ export default function ListItem(props){
         </div>
     )
 }
+
